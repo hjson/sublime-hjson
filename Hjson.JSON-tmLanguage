@@ -1,0 +1,162 @@
+{
+  "name": "Hjson",
+  "scopeName": "source.hjson",
+  "uuid": "a83636f5-d746-4c3e-b4e3-0589264a8392",
+  "fileTypes":
+  [
+    "hjson"
+  ],
+  "foldingStartMarker": "(?x:     # turn on extended mode\n              ^    # a line beginning with\n              \\s*    # some optional space\n              [{\\[]  # the start of an object or array\n              (?!    # but not followed by\n              .*   # whatever\n              [}\\]]  # and the close of an object or array\n              ,?   # an optional comma\n              \\s*  # some optional space\n              $    # at the end of the line\n              )\n              |    # ...or...\n              [{\\[]  # the start of an object or array\n              \\s*    # some optional space\n              $    # at the end of the line\n            )",
+  "foldingStopMarker": "(?x:   # turn on extended mode\n             ^    # a line beginning with\n             \\s*  # some optional space\n             [}\\]]  # and the close of an object or array\n             )",
+  "keyEquivalent": "^~J",
+  "patterns":
+  [
+    { "include": "#value" }
+  ],
+  "repository":
+  {
+    "value":
+    {
+      "comment": "the 'value' diagram at http://json.org",
+      "patterns":
+      [
+        { "include": "#constant" },
+        { "include": "#number" },
+        { "include": "#string" },
+        { "include": "#array" },
+        { "include": "#object" },
+        { "include": "#comments" },
+        { "include": "#mstring" },
+        { "include": "#ustring" }
+      ]
+    },
+    "object":
+    {
+      "name": "meta.structure.dictionary.hjson",
+      "comment": "a JSON object",
+      "begin": "\\{",
+      "end": "\\}",
+      "beginCaptures": { "0": { "name": "punctuation.definition.dictionary.begin.hjson" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.dictionary.end.hjson" } },
+      "patterns":
+      [
+        {
+          "comment": "the JSON object key",
+          "include": "#string"
+        },
+        {
+          "include": "#keyname"
+        },
+        {
+          "include": "#comments"
+        },
+        {
+          "name": "meta.structure.dictionary.value.hjson",
+          "begin": ":",
+          "end": "(,)|($)|(?=\\})",
+          "beginCaptures": { "0": { "name": "punctuation.separator.dictionary.key-value.hjson" } },
+          "endCaptures": { "1": { "name": "punctuation.separator.dictionary.pair.hjson" } },
+          "patterns":
+          [
+            {
+              "comment": "the JSON object value",
+              "include": "#value"
+            },
+            {
+              "name": "invalid.illegal.expected-dictionary-separator.hjson",
+              "match": "[^\\s,]"
+            }
+          ]
+        },
+        {
+          "name": "invalid.illegal.expected-dictionary-separator.hjson",
+          "match": "[^\\s\\}]"
+        }
+      ]
+    },
+    "array":
+    {
+      "name": "meta.structure.array.hjson",
+      "begin": "\\[",
+      "end": "\\]",
+      "beginCaptures": { "0": { "name": "punctuation.definition.array.begin.hjson" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.array.end.hjson" } },
+      "patterns":
+      [
+        {
+          "include": "#value"
+        },
+        {
+          "include": "#comments"
+        },
+        {
+          "name": "punctuation.separator.array.hjson",
+          "match": "(,)|($)"
+        },
+        {
+          "name": "invalid.illegal.expected-array-separator.hjson",
+          "match": "[^\\s\\]]"
+        }
+      ]
+    },
+    "keyname":
+    {
+      "name": "string.quoted.keyname.hjson",
+      "match": "\\b([A-Za-z0-9]+)\\b"
+    },
+    "string":
+    {
+      "name": "string.quoted.double.hjson",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.hjson" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.hjson" } },
+      "patterns":
+      [
+        {
+          "name": "constant.character.escape.hjson",
+          "match": "(?x:        # turn on extended mode\n           \\\\        # a literal backslash\n           (?:         # ...followed by...\n             [\"\\\\/bfnrt]   # one of these characters\n             |         # ...or...\n             u         # a u\n             [0-9a-fA-F]{4}  # and four hex digits\n           )\n           )"
+        },
+        {
+          "name": "invalid.illegal.unrecognized-string-escape.hjson",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "mstring":
+    {
+      "name": "string.quoted.multiline.hjson",
+      "begin": "'''",
+      "end": "'''",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.hjson" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.hjson" } }
+    },
+    "ustring":
+    {
+      "name": "string.quoted.none.hjson",
+      "match": "\\b([^0-9\\-\\{\\[\\}\\],\\s].*)$"
+    },
+    "number":
+    {
+      "name": "constant.numeric.hjson",
+      "comment": "handles integer and decimal numbers",
+      "match": "(?x:     # turn on extended mode\n\t\t\t       -?     # an optional minus\n\t\t\t       (?:\n\t\t\t         0    # a zero\n\t\t\t         |    # ...or...\n\t\t\t         [1-9]  # a 1-9 character\n\t\t\t         \\d*    # followed by zero or more digits\n\t\t\t       )\n\t\t\t       (?:\n\t\t\t         (?:\n\t\t\t         \\.   # a period\n\t\t\t         \\d+  # followed by one or more digits\n\t\t\t         )?\n\t\t\t         (?:\n\t\t\t         [eE]   # an e character\n\t\t\t         [+-]?  # followed by an option +/-\n\t\t\t         \\d+  # followed by one or more digits\n\t\t\t         )?     # make exponent optional\n\t\t\t       )?     # make decimal portion optional\n\t\t\t       )"
+    },
+    "constant":
+    {
+      "name": "constant.language.hjson",
+      "match": "\\b(?:true|false|null)\\b"
+    },
+    "comments":
+    {
+      "patterns":
+      [
+        {
+          "name": "comment.line.hash",
+          "match": "(#).*$\\n?",
+          "captures": { "1": { "name": "punctuation.definition.comment.hjson" } }
+        }
+      ]
+    }
+  }
+}

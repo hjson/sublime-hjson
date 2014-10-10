@@ -1,2 +1,12 @@
-sublime-hjson
-=============
+# Sublime Hjson Language
+
+A plugin for Sublime Text 3 (http://www.sublimetext.com):
+
+Adds support for `*.hjson` files, see http://laktak.github.io/hjson.
+
+## Installation
+
+With [Package Control](https://sublime.wbond.net/):
+
+- Run the "Package Control: Install Package" command, find and install the Hjson plugin.
+
