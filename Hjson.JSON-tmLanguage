@@ -155,6 +155,25 @@
           "name": "comment.line.hash",
           "match": "(#).*$\\n?",
           "captures": { "1": { "name": "punctuation.definition.comment.hjson" } }
+        },
+        {
+            "end": "\\*/",
+            "name": "comment.block",
+            "captures": {
+                "0": {
+                    "name": "punctuation.definition.comment.hjson"
+                }
+            },
+            "begin": "/\\*"
+        },
+        {
+            "name": "comment.line.double-slash",
+            "match": "(//).*$\\n?",
+            "captures": {
+                "1": {
+                    "name": "punctuation.definition.comment.hjson"
+                }
+            }
         }
       ]
     }
