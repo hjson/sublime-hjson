@@ -150,7 +150,7 @@
 		<key>keyname</key>
 		<dict>
 			<key>match</key>
-			<string>\b([A-Za-z0-9]+)\b</string>
+			<string>\b([A-Za-z0-9]+)\s?(?=:)</string>
 			<key>name</key>
 			<string>string.quoted.keyname.hjson</string>
 		</dict>
@@ -236,63 +236,24 @@
 			<key>patterns</key>
 			<array>
 				<dict>
-					<key>comment</key>
-					<string>the JSON object key</string>
-					<key>include</key>
-					<string>#string</string>
-				</dict>
-				<dict>
 					<key>include</key>
 					<string>#keyname</string>
 				</dict>
 				<dict>
 					<key>include</key>
-					<string>#comments</string>
-				</dict>
-				<dict>
-					<key>begin</key>
-					<string>:</string>
-					<key>beginCaptures</key>
-					<dict>
-						<key>0</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.dictionary.key-value.hjson</string>
-						</dict>
-					</dict>
-					<key>end</key>
-					<string>(,)|($)|(?=\})</string>
-					<key>endCaptures</key>
-					<dict>
-						<key>1</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.dictionary.pair.hjson</string>
-						</dict>
-					</dict>
-					<key>name</key>
-					<string>meta.structure.dictionary.value.hjson</string>
-					<key>patterns</key>
-					<array>
-						<dict>
-							<key>comment</key>
-							<string>the JSON object value</string>
-							<key>include</key>
-							<string>#value</string>
-						</dict>
-						<dict>
-							<key>match</key>
-							<string>[^\s,]</string>
-							<key>name</key>
-							<string>invalid.illegal.expected-dictionary-separator.hjson</string>
-						</dict>
-					</array>
+					<string>#value</string>
 				</dict>
 				<dict>
 					<key>match</key>
-					<string>[^\s\}]</string>
+					<string>:</string>
 					<key>name</key>
-					<string>invalid.illegal.expected-dictionary-separator.hjson</string>
+					<string>punctuation.separator.dictionary.key-value.hjson</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>,</string>
+					<key>name</key>
+					<string>punctuation.separator.dictionary.pair.hjson</string>
 				</dict>
 			</array>
 		</dict>
@@ -347,7 +308,7 @@
 		<key>ustring</key>
 		<dict>
 			<key>match</key>
-			<string>\b([^0-9\-\{\[\}\],\s].*)$</string>
+			<string>\b([^:,0-9\-\{\[\}\]\s].*)$</string>
 			<key>name</key>
 			<string>string.quoted.none.hjson</string>
 		</dict>

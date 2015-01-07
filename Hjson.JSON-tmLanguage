@@ -41,36 +41,18 @@
       "patterns":
       [
         {
-          "comment": "the JSON object key",
-          "include": "#string"
-        },
-        {
           "include": "#keyname"
         },
         {
-          "include": "#comments"
+          "include": "#value"
         },
         {
-          "name": "meta.structure.dictionary.value.hjson",
-          "begin": ":",
-          "end": "(,)|($)|(?=\\})",
-          "beginCaptures": { "0": { "name": "punctuation.separator.dictionary.key-value.hjson" } },
-          "endCaptures": { "1": { "name": "punctuation.separator.dictionary.pair.hjson" } },
-          "patterns":
-          [
-            {
-              "comment": "the JSON object value",
-              "include": "#value"
-            },
-            {
-              "name": "invalid.illegal.expected-dictionary-separator.hjson",
-              "match": "[^\\s,]"
-            }
-          ]
+          "name": "punctuation.separator.dictionary.key-value.hjson",
+          "match": ":"
         },
         {
-          "name": "invalid.illegal.expected-dictionary-separator.hjson",
-          "match": "[^\\s\\}]"
+          "name": "punctuation.separator.dictionary.pair.hjson",
+          "match": ","
         }
       ]
     },
@@ -102,7 +84,7 @@
     "keyname":
     {
       "name": "string.quoted.keyname.hjson",
-      "match": "\\b([A-Za-z0-9]+)\\b"
+      "match": "\\b([A-Za-z0-9]+)\\s?(?=:)"
     },
     "string":
     {
@@ -134,7 +116,7 @@
     "ustring":
     {
       "name": "string.quoted.none.hjson",
-      "match": "\\b([^0-9\\-\\{\\[\\}\\],\\s].*)$"
+      "match": "\\b([^:,0-9\\-\\{\\[\\}\\]\\s].*)$"
     },
     "number":
     {
@@ -157,23 +139,15 @@
           "captures": { "1": { "name": "punctuation.definition.comment.hjson" } }
         },
         {
-            "end": "\\*/",
-            "name": "comment.block",
-            "captures": {
-                "0": {
-                    "name": "punctuation.definition.comment.hjson"
-                }
-            },
-            "begin": "/\\*"
+          "name": "comment.block",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "captures": { "0": { "name": "punctuation.definition.comment.hjson" } }
         },
         {
-            "name": "comment.line.double-slash",
-            "match": "(//).*$\\n?",
-            "captures": {
-                "1": {
-                    "name": "punctuation.definition.comment.hjson"
-                }
-            }
+          "name": "comment.line.double-slash",
+          "match": "(//).*$\\n?",
+          "captures": { "1": { "name": "punctuation.definition.comment.hjson" } }
         }
       ]
     }
