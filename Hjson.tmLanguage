@@ -150,7 +150,7 @@
 		<key>keyname</key>
 		<dict>
 			<key>match</key>
-			<string>\b([A-Za-z0-9]+)\s?(?=:)</string>
+			<string>\b([^,\{\[\}\]\s]+)(?=:)</string>
 			<key>name</key>
 			<string>string.quoted.keyname.hjson</string>
 		</dict>
