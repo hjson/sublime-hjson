@@ -29,9 +29,15 @@ contexts:
         - include: comments
         - match: ":"
           scope: punctuation.separator.dictionary.key-value.hjson
-        - include: value
-        - match: ","
-          scope: punctuation.separator.dictionary.pair.hjson
+          push:
+            - meta_scope: meta.structure.dictionary.value.hjson
+            - match: '(,)|\n|(?=\})'
+              captures:
+                1: punctuation.separator.dictionary.pair.hjson
+              pop: true
+            - include: value
+            - match: '[^\s,]'
+              scope: invalid.illegal.expected-dictionary-separator.hjson
         - match: '[^\s\}]'
           scope: invalid.illegal.expected-dictionary-separator.hjson
   array:
@@ -61,6 +67,10 @@ contexts:
         - match: \*/
           pop: true
     - match: (//).*$\n?
+      scope: comment.line.double-slash.js
+      captures:
+        1: punctuation.definition.comment.hjson
+    - match: (#).*$\n?
       scope: comment.line.double-slash.js
       captures:
         1: punctuation.definition.comment.hjson
