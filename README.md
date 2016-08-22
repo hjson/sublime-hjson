@@ -2,7 +2,7 @@
 
 A plugin for Sublime Text 3 (http://www.sublimetext.com):
 
-Adds support for `*.hjson` files, see http://laktak.github.io/hjson.
+Adds syntax support for `*.hjson` files, see [hjson.org](http://hjson.org).
 
 ## Installation
 
