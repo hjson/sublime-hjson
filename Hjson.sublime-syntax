@@ -6,6 +6,8 @@ file_extensions:
 scope: source.hjson
 contexts:
   main:
+    - include: comments
+    - include: rootObject
     - include: value
   value:
     - include: constant
@@ -24,6 +26,32 @@ contexts:
         - match: '\}'
           scope: punctuation.definition.dictionary.end.hjson
           pop: true
+        - include: string
+        - include: keyname
+        - include: comments
+        # include \n to handle key/value in separate lines
+        - match: ":\\s*\\n?"
+          scope: punctuation.separator.dictionary.key-value.hjson
+          push:
+            - meta_scope: meta.structure.dictionary.value.hjson
+            # optional newline
+            - match: '^\s*\n'
+              scope: meta.structure.dictionary.value.newline.hjson
+            - match: '(,)|\n|(?=\})'
+              captures:
+                1: punctuation.separator.dictionary.pair.hjson
+              pop: true
+            - include: value
+            - match: '[^\s,]'
+              scope: invalid.illegal.expected-dictionary-separator.hjson
+        - match: '[^\s\}]'
+          scope: invalid.illegal.expected-dictionary-separator.hjson
+  # a root object is only allowed at the root level where it can be
+  # specified without the enclosing {}
+  rootObject:
+    - match: '(?=\s*(([^,\{\[\}\]\s]+)|"(?:[^"\\]|\\.)*")\s*:)'
+      push:
+        - meta_scope: meta.structure.dictionary.hjson
         - include: string
         - include: keyname
         - include: comments
