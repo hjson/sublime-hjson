@@ -27,10 +27,14 @@ contexts:
         - include: string
         - include: keyname
         - include: comments
-        - match: ":"
+        # include \n to handle key/value in separate lines
+        - match: ":\\s*\\n?"
           scope: punctuation.separator.dictionary.key-value.hjson
           push:
             - meta_scope: meta.structure.dictionary.value.hjson
+            # optional newline
+            - match: '^\s*\n'
+              scope: meta.structure.dictionary.value.newline.hjson
             - match: '(,)|\n|(?=\})'
               captures:
                 1: punctuation.separator.dictionary.pair.hjson
@@ -66,11 +70,11 @@ contexts:
         - meta_scope: comment.block.hjson
         - match: \*/
           pop: true
-    - match: (//).*$\n?
+    - match: (//).*$
       scope: comment.line.double-slash.js
       captures:
         1: punctuation.definition.comment.hjson
-    - match: (#).*$\n?
+    - match: (#).*$
       scope: comment.line.double-slash.js
       captures:
         1: punctuation.definition.comment.hjson
@@ -78,7 +82,7 @@ contexts:
     - match: \b(?:true|false|null)\b
       scope: constant.language.hjson
   keyname:
-    - match: '\b([^,\{\[\}\]\s]+)(?=:)'
+    - match: '\b([^,\{\[\}\]\s]+)\s*(?=:)'
       scope: string.quoted.keyname.hjson
   string:
     - match: '"'
