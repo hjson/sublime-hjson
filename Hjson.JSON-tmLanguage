@@ -11,6 +11,8 @@
   "keyEquivalent": "^~J",
   "patterns":
   [
+    { "include": "#comments" },
+    { "include": "#rootObject" },
     { "include": "#value" }
   ],
   "repository":
@@ -28,6 +30,32 @@
         { "include": "#comments" },
         { "include": "#mstring" },
         { "include": "#ustring" }
+      ]
+    },
+    "rootObject":
+    {
+      "name": "meta.structure.dictionary.hjson",
+      "comment": "a JSON object",
+      "begin": "(?=\\s*(([^,\\{\\[\\}\\]\\s]+)|\"(?:[^\"\\\\]|\\\\.)*\")\\s*:)",
+      "end": "---none---",
+      "beginCaptures": { "0": { "name": "punctuation.definition.dictionary.begin.hjson" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.dictionary.end.hjson" } },
+      "patterns":
+      [
+        {
+          "include": "#keyname"
+        },
+        {
+          "include": "#value"
+        },
+        {
+          "name": "punctuation.separator.dictionary.key-value.hjson",
+          "match": ":"
+        },
+        {
+          "name": "punctuation.separator.dictionary.pair.hjson",
+          "match": ","
+        }
       ]
     },
     "object":
@@ -84,7 +112,7 @@
     "keyname":
     {
       "name": "string.quoted.keyname.hjson",
-      "match": "\\b([^,\\{\\[\\}\\]\\s]+)(?=:)"
+      "match": "(([^,\\{\\[\\}\\]\\s]+)|\"(?:[^\"\\\\]|\\\\.)*\")\\s*(?=:)"
     },
     "string":
     {
