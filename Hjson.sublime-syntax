@@ -1,5 +1,6 @@
 %YAML 1.2
 ---
+# http://www.sublimetext.com/docs/3/syntax.html
 name: Hjson
 file_extensions:
   - hjson
@@ -7,166 +8,441 @@ scope: source.hjson
 contexts:
   main:
     - include: comments
-    - include: rootObject
     - include: value
-  value:
-    - include: constant
-    - include: number
-    - include: string
-    - include: mlstring
-    - include: array
-    - include: object
-    - include: comments
-    - include: uqstring
-  object:
-    - match: '\{'
-      scope: punctuation.definition.dictionary.begin.hjson
-      push:
-        - meta_scope: meta.structure.dictionary.hjson
-        - match: '\}'
-          scope: punctuation.definition.dictionary.end.hjson
-          pop: true
-        - include: string
-        - include: keyname
-        - include: comments
-        # include \n to handle key/value in separate lines
-        - match: ":\\s*\\n?"
-          scope: punctuation.separator.dictionary.key-value.hjson
-          push:
-            - meta_scope: meta.structure.dictionary.value.hjson
-            # optional newline
-            - match: '^\s*\n'
-              scope: meta.structure.dictionary.value.newline.hjson
-            - match: '(,)|\n|(?=\})'
-              captures:
-                1: punctuation.separator.dictionary.pair.hjson
-              pop: true
-            - include: value
-            - match: '[^\s,]'
-              scope: invalid.illegal.expected-dictionary-separator.hjson
-        - match: '[^\s\}]'
-          scope: invalid.illegal.expected-dictionary-separator.hjson
-  # a root object is only allowed at the root level where it can be
-  # specified without the enclosing {}
-  rootObject:
-    - match: '(?=\s*(([^,\{\[\}\]\s]+)|"(?:[^"\\]|\\.)*")\s*:)'
-      push:
-        - meta_scope: meta.structure.dictionary.hjson
-        - include: string
-        - include: keyname
-        - include: comments
-        # include \n to handle key/value in separate lines
-        - match: ":\\s*\\n?"
-          scope: punctuation.separator.dictionary.key-value.hjson
-          push:
-            - meta_scope: meta.structure.dictionary.value.hjson
-            # optional newline
-            - match: '^\s*\n'
-              scope: meta.structure.dictionary.value.newline.hjson
-            - match: '(,)|\n|(?=\})'
-              captures:
-                1: punctuation.separator.dictionary.pair.hjson
-              pop: true
-            - include: value
-            - match: '[^\s,]'
-              scope: invalid.illegal.expected-dictionary-separator.hjson
-        - match: '[^\s\}]'
-          scope: invalid.illegal.expected-dictionary-separator.hjson
+    - match: '[^\s]+'
+      scope: invalid.illegal.excess-characters.hjson
   array:
     - match: '\['
-      scope: punctuation.definition.array.begin.hjson
+      captures:
+        0: punctuation.definition.array.begin.hjson
       push:
         - meta_scope: meta.structure.array.hjson
-        - match: '\]'
-          scope: punctuation.definition.array.end.hjson
+        - match: '(\])(?:\s*([^,\s].*)$)?'
+          captures:
+            1: punctuation.definition.array.end.hjson
+            2: invalid.illegal.value.hjson
           pop: true
-        - include: value
+        - include: arrayContent
+  arrayArray:
+    - match: '\['
+      captures:
+        0: punctuation.definition.array.begin.hjson
+      push:
+        - meta_scope: meta.structure.array.hjson
+        - match: '(\])(?:\s*([^,\s\]].*)$)?'
+          captures:
+            1: punctuation.definition.array.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: arrayContent
+  arrayConstant:
+    - match: '\b(true|false|null)(?:[\t ]*(?=,)|[\t ]*(?:(,)[\t ]*)?(?=$|#|/\*|//|\]))'
+      captures:
+        1: constant.language.hjson
+        2: punctuation.separator.array.after-const.hjson
+  arrayContent:
+    - include: comments
+    - include: arrayValue
+    - match: '(?<=\[)|,'
+      captures:
+        1: punctuation.separator.dictionary.pair.hjson
+      push:
+        - match: '(?=[^\s,/#])|(?=/[^/*])'
+          pop: true
+        - include: comments
         - match: ","
-          scope: punctuation.separator.array.hjson
-        - match: '[^\s\]]'
-          scope: invalid.illegal.expected-array-separator.hjson
-  comments:
-    - match: /\*\*
-      scope: punctuation.definition.comment.hjson
-      push:
-        - meta_scope: comment.block.documentation.hjson
-        - match: \*/
-          pop: true
-    - match: /\*
-      scope: punctuation.definition.comment.hjson
-      push:
-        - meta_scope: comment.block.hjson
-        - match: \*/
-          pop: true
-    - match: (//).*$
-      scope: comment.line.double-slash.js
-      captures:
-        1: punctuation.definition.comment.hjson
-    - match: (#).*$
-      scope: comment.line.double-slash.js
-      captures:
-        1: punctuation.definition.comment.hjson
-  constant:
-    - match: \b(?:true|false|null)\b
-      scope: constant.language.hjson
-  keyname:
-    - match: '\b([^,\{\[\}\]\s]+)\s*(?=:)'
-      scope: string.quoted.keyname.hjson
-  string:
+          scope: invalid.illegal.extra-comma.hjson
+    - match: ","
+      scope: punctuation.separator.array.hjson
+    - match: '[^\s\]]'
+      scope: invalid.illegal.expected-array-separator.hjson
+  arrayJstring:
     - match: '"'
-      scope: punctuation.definition.string.begin.hjson
+      captures:
+        0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.double.hjson
-        - match: '"'
-          scope: punctuation.definition.string.end.hjson
+        - match: '(")(?:\s*((?:[^,\s\]#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
           pop: true
-        - match: |-
-            (?x:                # turn on extended mode
-              \\                # a literal backslash
-              (?:               # ...followed by...
-                ["\\/bfnrt]     # one of these characters
-                |               # ...or...
-                u               # a u
-                [0-9a-fA-F]{4}  # and four hex digits
-              )
-            )
-          scope: constant.character.escape.hjson
-        - match: \\.
-          scope: invalid.illegal.unrecognized-string-escape.hjson
-  uqstring:
-    - match: '([^:,0-9\-\{\[\}\]\s].*)$'
-      scope: string.quoted.unquoted.hjson
-  mlstring:
-    - match: '('''''')'
+        - include: jstringDoubleContent
+    - match: "'"
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.single.hjson
+        - match: '('')(?:\s*((?:[^,\s\]#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: jstringSingleContent
+  arrayMstring:
+    - match: "'''"
       captures:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.multiline.hjson
-        - match: '('''''')'
+        - match: '('''''')(?:\s*((?:[^,\s\]#/]|/[^/*]).*)$)?'
           captures:
-            0: punctuation.definition.string.end.hjson
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+  arrayNumber:
+    - match: '(-?(?:0|(?:[1-9]\d*))(?:\.\d+)?(?:[eE][+-]?\d+)?)(?:[\t ]*(?=,)|[\t ]*(?:(,)[\t ]*)?(?=$|#|/\*|//|\]))'
+      captures:
+        1: constant.numeric.hjson
+        2: punctuation.separator.array.after-num.hjson
+  arrayObject:
+    - match: '\{'
+      captures:
+        0: punctuation.definition.dictionary.begin.hjson
+      push:
+        - meta_scope: meta.structure.dictionary.hjson
+        - match: '(\}|(?<=\}))(?:\s*([^,\s\]].*)$)?'
+          captures:
+            1: punctuation.definition.dictionary.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: objectContent
+  arrayString:
+    - include: arrayMstring
+    - include: arrayJstring
+    - include: ustring
+  arrayValue:
+    - include: arrayNumber
+    - include: arrayConstant
+    - include: arrayString
+    - include: arrayObject
+    - include: arrayArray
+  comments:
+    - match: ^\s*(#).*(?:\n)?
+      scope: comment.line.hash
+      captures:
+        1: punctuation.definition.comment.hjson
+    - match: ^\s*(//).*(?:\n)?
+      scope: comment.line.double-slash
+      captures:
+        1: punctuation.definition.comment.hjson
+    - match: ^\s*/\*
+      captures:
+        1: punctuation.definition.comment.hjson
+      push:
+        - meta_scope: comment.block.double-slash
+        - match: \*/(?:\s*\n)?
+          captures:
+            1: punctuation.definition.comment.hjson
+          pop: true
+    - match: '(#)[^\n]*'
+      scope: comment.line.hash
+      captures:
+        1: punctuation.definition.comment.hjson
+    - match: '(//)[^\n]*'
+      scope: comment.line.double-slash
+      captures:
+        1: punctuation.definition.comment.hjson
+    - match: /\*
+      captures:
+        1: punctuation.definition.comment.hjson
+      push:
+        - meta_scope: comment.block.double-slash
+        - match: \*/
+          captures:
+            1: punctuation.definition.comment.hjson
+          pop: true
+  constant:
+    - match: '\b(true|false|null)[\t ]*(?=$|#|/\*|//|\])'
+      captures:
+        1: constant.language.hjson
+  jstring:
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.double.hjson
+        - match: '(")(?:\s*((?:[^\s#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: jstringDoubleContent
+    - match: "'"
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.single.hjson
+        - match: '('')(?:\s*((?:[^\s#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: jstringSingleContent
+  jstringDoubleContent:
+    - match: '\\(?:["''\\\/bfnrt]|u[0-9a-fA-F]{4})'
+      scope: constant.character.escape.hjson
+    - match: \\.
+      scope: invalid.illegal.unrecognized-string-escape.hjson
+    - match: '[^"]*[^\n\r"\\]$'
+      scope: invalid.illegal.string.hjson
+  jstringSingleContent:
+    - match: '\\(?:["''\\\/bfnrt]|u[0-9a-fA-F]{4})'
+      scope: constant.character.escape.hjson
+    - match: \\.
+      scope: invalid.illegal.unrecognized-string-escape.hjson
+    - match: '[^'']*[^\n\r''\\]$'
+      scope: invalid.illegal.string.hjson
+  keyNewline:
+    - match: |-
+        (?x:
+          (
+            (?:[^:,\{\}\[\]\s"'][^:,\{\}\[\]\s]*) |
+            (?: # json string w/ '
+              '
+              (?:
+                [^\\'] | # anything but an escape character or quote
+                (\\(?:["'\\\/bfnrt]|u[0-9a-fA-F]{4})) | # escape characters
+                (\\.) # bad escape characters
+              )*
+              '
+            ) |
+            (?: # json string w/ "
+              "
+              (?:
+                [^\\"] | # anything but an escape character or quote
+                (\\(?:["'\\\/bfnrt]|u[0-9a-fA-F]{4})) | # escape characters
+                (\\.) # bad escape characters
+              )*
+              "
+            )
+          )
+          \s+ # capture the line ending
+        )
+      captures:
+        0: meta.structure.key-newline.begin.hjson
+        1: string.quoted.keyname.hjson
+        2: constant.character.escape.hjson
+        3: invalid.illegal.unrecognized-string-escape.hjson
+        4: constant.character.escape.hjson
+        5: invalid.illegal.unrecognized-string-escape.hjson
+      push:
+        - meta_scope: meta.structure.key-newline.hjson
+        - match: '^\s*:'
+          captures:
+            0: punctuation.separator.dictionary.key-value.hjson
+          pop: true
+        - match: \s+
+        - match: '[^\s]+'
+          scope: invalid.illegal.object-property.hjson
+  keyNewlineValue:
+    - match: (?<=:)(?:\s*\n)?
+      push:
+        - meta_scope: meta.strucure.key-newline-value.hjson
+        - match: '(?<!^)\n|(?=\})'
+          pop: true
+        - include: comments
+        - match: ^\s+
+        - include: objectValue
+        - match: '[^\s]+'
+          scope: invalid.illegal.object-property.hjson
+  keyValue:
+    - match: |-
+        (?x:
+          (
+            (?:[^:,\{\}\[\]\s"'][^:,\{\}\[\]\s]*) |
+            (?: # json string w/ '
+              '
+              (?:
+                [^\\'] | # anything but an escape character or quote
+                (\\(?:["'\\\/bfnrt]|u[0-9a-fA-F]{4})) | # escape characters
+                (\\.) # bad escape characters
+              )*
+              '
+            ) |
+            (?: # json string w/ "
+              "
+              (?:
+                [^\\"] | # anything but an escape character or quote
+                (\\(?:["'\\\/bfnrt]|u[0-9a-fA-F]{4})) | # escape characters
+                (\\.) # bad escape characters
+              )*
+              "
+            )
+          )
+          \s*
+          (:)
+          \s* # capture the line ending if there is no value on the same line
+          (\})?
+        )
+      captures:
+        0: meta.structure.key-value.begin.hjson
+        1: string.quoted.keyname.hjson
+        2: constant.character.escape.hjson
+        3: invalid.illegal.unrecognized-string-escape.hjson
+        4: constant.character.escape.hjson
+        5: invalid.illegal.unrecognized-string-escape.hjson
+        6: punctuation.separator.dictionary.key-value.hjson
+        7: invalid.illegal.object-property.closing-bracket.hjson
+      push:
+        - meta_scope: meta.structure.key-value.hjson
+        - match: '(?<!^)\n|(\})|(?<=,)'
+          captures:
+            1: meta.structure.key-value-value.end.hjson
+          pop: true
+        - include: comments
+        - include: keyValueValue
+        - match: '^\s*(\})'
+          captures:
+            1: invalid.illegal.object-property.closing-bracket.hjson
+        - match: '[^\s]+'
+          scope: invalid.illegal.object-property.hjson
+  keyValueValue:
+    - match: '(?=[^}/#\s,])|(?=/[^/*])'
+      push:
+        - meta_scope: meta.structure.key-value-value.hjson
+        - match: '(?<!^)(?=\n)|(?=\})|(,)'
+          captures:
+            1: punctuation.separator.dictionary.pair.hjson
+          pop: true
+        - include: comments
+        - match: ^\s+
+        - include: objectValue
+        - match: '[^\s]+'
+          scope: invalid.illegal.object-property.hjson
+  mstring:
+    - match: "'''"
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.multiline.hjson
+        - match: '('''''')(?:\s*((?:[^\s#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
           pop: true
   number:
-    # handles integer and decimal numbers
-    - match: |-
-        (?x:         # turn on extended mode
-          -?         # an optional minus
-          (?:
-            0        # a zero
-            |        # ...or...
-            [1-9]    # a 1-9 character
-            \d*      # followed by zero or more digits
-          )
-          (?:
-            (?:
-              \.     # a period
-              \d+    # followed by one or more digits
-            )?
-            (?:
-              [eE]   # an e character
-              [+-]?  # followed by an option +/-
-              \d+    # followed by one or more digits
-            )?       # make exponent optional
-          )?         # make decimal portion optional
-        )
-      scope: constant.numeric.hjson
+    - match: '(-?(?:0|(?:[1-9]\d*))(?:\.\d+)?(?:[eE][+-]?\d+)?)[\t ]*(?=$|#|/\*|//|\])'
+      captures:
+        1: constant.numeric.hjson
+  object:
+    - match: '\{'
+      captures:
+        0: punctuation.definition.dictionary.begin.hjson
+      push:
+        - meta_scope: meta.structure.dictionary.hjson
+        - match: '(\}|(?<=\}))(?:\s*([^,\s].*)$)?'
+          captures:
+            1: punctuation.definition.dictionary.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: objectContent
+  objectArray:
+    - match: '\['
+      captures:
+        0: punctuation.definition.array.begin.hjson
+      push:
+        - meta_scope: meta.structure.array.hjson
+        - match: '(\])(?:\s*([^,\s\}].*)$)?'
+          captures:
+            1: punctuation.definition.array.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: arrayContent
+  objectConstant:
+    - match: '\b(true|false|null)(?:[\t ]*(?=,)|[\t ]*(?:(,)[\t ]*)?(?=$|#|/\*|//|\}))'
+      captures:
+        1: constant.language.hjson
+        2: punctuation.separator.dictionary.pair.after-const.hjson
+  objectContent:
+    - include: comments
+    - include: keyValue
+    - include: keyNewline
+    - match: ':[.|\s]'
+      scope: invalid.illegal.object-property.hjson
+    - include: keyNewlineValue
+    - match: '(?<=\{|,)|,'
+      captures:
+        1: punctuation.separator.dictionary.pair.hjson
+      push:
+        - match: '(?=[^\s,/#])|(?=/[^/*])'
+          pop: true
+        - include: comments
+        - match: ","
+          scope: invalid.illegal.extra-comma.hjson
+    - match: '[^\s]'
+      scope: invalid.illegal.object-property.hjson
+  objectJstring:
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.double.hjson
+        - match: '(")(?:\s*((?:[^,\s\}#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: jstringDoubleContent
+    - match: "'"
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.single.hjson
+        - match: '('')(?:\s*((?:[^,\s\}#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: jstringSingleContent
+  objectMstring:
+    - match: "'''"
+      captures:
+        0: punctuation.definition.string.begin.hjson
+      push:
+        - meta_scope: string.quoted.multiline.hjson
+        - match: '('''''')(?:\s*((?:[^,\s\}#/]|/[^/*]).*)$)?'
+          captures:
+            1: punctuation.definition.string.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+  objectNumber:
+    - match: '(-?(?:0|(?:[1-9]\d*))(?:\.\d+)?(?:[eE][+-]?\d+)?)(?:[\t ]*(?=,)|[\t ]*(?:(,)[\t ]*)?(?=$|#|/\*|//|\}))'
+      captures:
+        1: constant.numeric.hjson
+        2: punctuation.separator.dictionary.pair.after-num.hjson
+  objectObject:
+    - match: '\{'
+      captures:
+        0: punctuation.definition.dictionary.begin.hjson
+      push:
+        - meta_scope: meta.structure.dictionary.hjson
+        - match: '(\}|(?<=\})\}?)(?:\s*([^,\s}].*)$)?'
+          captures:
+            1: punctuation.definition.dictionary.end.hjson
+            2: invalid.illegal.value.hjson
+          pop: true
+        - include: objectContent
+  objectString:
+    - include: objectMstring
+    - include: objectJstring
+    - include: ustring
+  objectValue:
+    - include: objectNumber
+    - include: objectConstant
+    - include: objectString
+    - include: objectObject
+    - include: objectArray
+  string:
+    - include: mstring
+    - include: jstring
+    - include: ustring
+  ustring:
+    - match: '([^:,\{\[\}\]\s].*)$'
+      scope: string.quoted.none.hjson
+  value:
+    - include: number
+    - include: constant
+    - include: string
+    - include: object
+    - include: array
