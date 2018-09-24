@@ -221,7 +221,7 @@ contexts:
         )
       captures:
         0: meta.structure.key-newline.begin.hjson
-        1: string.quoted.keyname.hjson
+        1: support.type.property-name.hjson
         2: constant.character.escape.hjson
         3: invalid.illegal.unrecognized-string-escape.hjson
         4: constant.character.escape.hjson
@@ -277,7 +277,7 @@ contexts:
         )
       captures:
         0: meta.structure.key-value.begin.hjson
-        1: string.quoted.keyname.hjson
+        1: support.type.property-name.hjson
         2: constant.character.escape.hjson
         3: invalid.illegal.unrecognized-string-escape.hjson
         4: constant.character.escape.hjson
