@@ -193,60 +193,7 @@ contexts:
       scope: invalid.illegal.unrecognized-string-escape.hjson
     - match: '[^'']*[^\n\r''\\]$'
       scope: invalid.illegal.string.hjson
-  keyNewline:
-    - match: |-
-        (?x:
-          (
-            (?:[^:,\{\}\[\]\s"'][^:,\{\}\[\]\s]*) |
-            (?: # json string w/ '
-              '
-              (?:
-                [^\\'] | # anything but an escape character or quote
-                (\\(?:["'\\\/bfnrt]|u[0-9a-fA-F]{4})) | # escape characters
-                (\\.) # bad escape characters
-              )*
-              '
-            ) |
-            (?: # json string w/ "
-              "
-              (?:
-                [^\\"] | # anything but an escape character or quote
-                (\\(?:["'\\\/bfnrt]|u[0-9a-fA-F]{4})) | # escape characters
-                (\\.) # bad escape characters
-              )*
-              "
-            )
-          )
-          \s+ # capture the line ending
-        )
-      captures:
-        0: meta.structure.key-newline.begin.hjson
-        1: support.type.property-name.hjson
-        2: constant.character.escape.hjson
-        3: invalid.illegal.unrecognized-string-escape.hjson
-        4: constant.character.escape.hjson
-        5: invalid.illegal.unrecognized-string-escape.hjson
-      push:
-        - meta_scope: meta.structure.key-newline.hjson
-        - match: '^\s*:'
-          captures:
-            0: punctuation.separator.dictionary.key-value.hjson
-          pop: true
-        - match: \s+
-        - match: '[^\s]+'
-          scope: invalid.illegal.object-property.hjson
-  keyNewlineValue:
-    - match: (?<=:)(?:\s*\n)?
-      push:
-        - meta_scope: meta.strucure.key-newline-value.hjson
-        - match: '(?<!^)\n|(?=\})'
-          pop: true
-        - include: comments
-        - match: ^\s+
-        - include: objectValue
-        - match: '[^\s]+'
-          scope: invalid.illegal.object-property.hjson
-  keyValue:
+  key:
     - match: |-
         (?x:
           (
@@ -271,9 +218,7 @@ contexts:
             )
           )
           \s*
-          (:)
-          \s* # capture the line ending if there is no value on the same line
-          (\})?
+          (?!\n)
         )
       captures:
         0: meta.structure.key-value.begin.hjson
@@ -282,32 +227,67 @@ contexts:
         3: invalid.illegal.unrecognized-string-escape.hjson
         4: constant.character.escape.hjson
         5: invalid.illegal.unrecognized-string-escape.hjson
-        6: punctuation.separator.dictionary.key-value.hjson
-        7: invalid.illegal.object-property.closing-bracket.hjson
+        6: invalid.illegal.separator.hjson
       push:
-        - meta_scope: meta.structure.key-value.hjson
-        - match: '(?<!^)\n|(\})|(?<=,)'
-          captures:
-            1: meta.structure.key-value-value.end.hjson
+        - match: (?<!^|:)\s*\n
           pop: true
-        - include: comments
-        - include: keyValueValue
-        - match: '^\s*(\})'
-          captures:
-            1: invalid.illegal.object-property.closing-bracket.hjson
+        - include: keyValue
+        - include: keyNewlineValue
+        - include: keyNewline
         - match: '[^\s]+'
           scope: invalid.illegal.object-property.hjson
-  keyValueValue:
-    - match: '(?=[^}/#\s,])|(?=/[^/*])'
+  keyNewline:
+    - match: |-
+        (?x:
+          \s+ # capture the line ending
+        )
       push:
-        - meta_scope: meta.structure.key-value-value.hjson
-        - match: '(?<!^)(?=\n)|(?=\})|(,)'
+        - meta_scope: meta.structure.key-newline.hjson
+        - match: '^\s*:'
           captures:
-            1: punctuation.separator.dictionary.pair.hjson
+            0: punctuation.separator.dictionary.key-value.hjson
+          pop: true
+        - match: \s+
+        - match: '[^\s]+'
+          scope: invalid.illegal.object-property.hjson
+  keyNewlineValue:
+    - match: (?<=:)(?:\s*\n)?
+      push:
+        - meta_scope: meta.strucure.key-newline-value.hjson
+        - match: '(?<!^)\s*(?=\n)|(\})|(,)'
+          captures:
+            1: meta.structure.key-value-value.end.hjson
+            2: punctuation.separator.dictionary.pair.hjson
           pop: true
         - include: comments
         - match: ^\s+
         - include: objectValue
+        - match: '[^\s]+'
+          scope: invalid.illegal.object-property.hjson
+  keyValue:
+    - match: |-
+        (?x:
+          \s*
+          (:)
+          \s* # capture the line ending if there is no value on the same line
+          (\})?
+        )
+      captures:
+        1: punctuation.separator.dictionary.key-value.hjson
+        2: invalid.illegal.object-property.closing-bracket.hjson
+      push:
+        - meta_scope: meta.structure.key-value.hjson
+        - match: '(?<!^)\s*(?=\n)|(\})|(,)'
+          captures:
+            1: meta.structure.key-value.end.hjson
+            2: punctuation.separator.dictionary.pair.hjson
+          pop: true
+        - include: comments
+        - match: ^\s+
+        - include: objectValue
+        - match: '^\s*(\})'
+          captures:
+            1: invalid.illegal.object-property.closing-bracket.hjson
         - match: '[^\s]+'
           scope: invalid.illegal.object-property.hjson
   mstring:
@@ -356,11 +336,9 @@ contexts:
         2: punctuation.separator.dictionary.pair.after-const.hjson
   objectContent:
     - include: comments
-    - include: keyValue
-    - include: keyNewline
+    - include: key
     - match: ':[.|\s]'
       scope: invalid.illegal.object-property.hjson
-    - include: keyNewlineValue
     - match: '(?<=\{|,)|,'
       captures:
         1: punctuation.separator.dictionary.pair.hjson
@@ -370,7 +348,7 @@ contexts:
         - include: comments
         - match: ","
           scope: invalid.illegal.extra-comma.hjson
-    - match: '[^\s]'
+    - match: '[^\s]+'
       scope: invalid.illegal.object-property.hjson
   objectJstring:
     - match: '"'
