@@ -9,7 +9,7 @@ contexts:
   main:
     - include: comments
     - include: value
-    - match: '[^\s]+'
+    - match: '[^\s]'
       scope: invalid.illegal.excess-characters.hjson
   array:
     - match: '\['
@@ -17,7 +17,7 @@ contexts:
         0: punctuation.definition.array.begin.hjson
       push:
         - meta_scope: meta.structure.array.hjson
-        - match: '(\])(?:\s*([^,\s].*)$)?'
+        - match: '(\])(?:\s*([^,\s]+))?'
           captures:
             1: punctuation.definition.array.end.hjson
             2: invalid.illegal.value.hjson
@@ -29,7 +29,7 @@ contexts:
         0: punctuation.definition.array.begin.hjson
       push:
         - meta_scope: meta.structure.array.hjson
-        - match: '(\])(?:\s*([^,\s\]].*)$)?'
+        - match: '(\])(?:\s*([^,\s\]]+))?'
           captures:
             1: punctuation.definition.array.end.hjson
             2: invalid.illegal.value.hjson
@@ -62,7 +62,7 @@ contexts:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.double.hjson
-        - match: '(")(?:\s*((?:[^,\s\]#/]|/[^/*]).*)$)?'
+        - match: '(")(?:\s*((?:[^,\s\]#/]|/[^/*])+))?'
           captures:
             1: punctuation.definition.string.end.hjson
             2: invalid.illegal.value.hjson
@@ -73,7 +73,7 @@ contexts:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.single.hjson
-        - match: '('')(?:\s*((?:[^,\s\]#/]|/[^/*]).*)$)?'
+        - match: '('')(?:\s*((?:[^,\s\]#/]|/[^/*])+))?'
           captures:
             1: punctuation.definition.string.end.hjson
             2: invalid.illegal.value.hjson
@@ -85,7 +85,7 @@ contexts:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.multiline.hjson
-        - match: '('''''')(?:\s*((?:[^,\s\]#/]|/[^/*]).*)$)?'
+        - match: '('''''')(?:\s*((?:[^,\s\]#/]|/[^/*])+))?'
           captures:
             1: punctuation.definition.string.end.hjson
             2: invalid.illegal.value.hjson
@@ -101,7 +101,7 @@ contexts:
         0: punctuation.definition.dictionary.begin.hjson
       push:
         - meta_scope: meta.structure.dictionary.hjson
-        - match: '(\}|(?<=\}))(?:\s*([^,\s\]].*)$)?'
+        - match: '(\}|(?<=\}))(?:\s*([^,\s\]]+))?'
           captures:
             1: punctuation.definition.dictionary.end.hjson
             2: invalid.illegal.value.hjson
@@ -237,6 +237,7 @@ contexts:
           )
           \s*
           (?!\n)
+          ([,\{\}\[\]]*)
         )
       captures:
         0: meta.structure.key-value.begin.hjson
@@ -246,12 +247,15 @@ contexts:
         4: constant.character.escape.hjson
         5: invalid.illegal.unrecognized-string-escape.hjson
         6: invalid.illegal.separator.hjson
+        7: invalid.illegal.property-name.hjson
       push:
-        - match: (?<!^|:)\s*\n
+        - match: '(?<!^|:)\s*\n|(?=})|(,)'
+          captures:
+            1: punctuation.separator.dictionary.pair.hjson
           pop: true
         - include: commentsNewline
         - include: keyValue
-        - match: '[^\s]+'
+        - match: '[^\s]'
           scope: invalid.illegal.object-property.hjson
   keyValue:
     - match: |-
@@ -259,17 +263,14 @@ contexts:
           \s*
           (:)
           \s* # capture the line ending if there is no value on the same line
-          (\})?
+          ([,\}\]]*)
         )
       captures:
         1: punctuation.separator.dictionary.key-value.hjson
-        2: invalid.illegal.object-property.closing-bracket.hjson
+        2: invalid.illegal.object-property.hjson
       push:
         - meta_scope: meta.structure.key-value.hjson
-        - match: '(?<!^)\s*(?=\n)|(\})|(,)'
-          captures:
-            1: meta.structure.key-value.end.hjson
-            2: punctuation.separator.dictionary.pair.hjson
+        - match: '(?<!^)\s*(?=\n)|(?=[},])'
           pop: true
         - include: comments
         - match: ^\s+
@@ -277,7 +278,7 @@ contexts:
         - match: '^\s*(\})'
           captures:
             1: invalid.illegal.object-property.closing-bracket.hjson
-        - match: '[^\s]+'
+        - match: '[^\s]'
           scope: invalid.illegal.object-property.hjson
   mstring:
     - match: "'''"
@@ -300,7 +301,7 @@ contexts:
         0: punctuation.definition.dictionary.begin.hjson
       push:
         - meta_scope: meta.structure.dictionary.hjson
-        - match: '(\}|(?<=\}))(?:\s*([^,\s].*)$)?'
+        - match: '(\}|(?<=\}))(?:\s*([^,\s]+))?'
           captures:
             1: punctuation.definition.dictionary.end.hjson
             2: invalid.illegal.value.hjson
@@ -312,7 +313,7 @@ contexts:
         0: punctuation.definition.array.begin.hjson
       push:
         - meta_scope: meta.structure.array.hjson
-        - match: '(\])(?:\s*([^,\s\}].*)$)?'
+        - match: '(\])(?:\s*([^,\s\}]+))?'
           captures:
             1: punctuation.definition.array.end.hjson
             2: invalid.illegal.value.hjson
@@ -345,7 +346,7 @@ contexts:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.double.hjson
-        - match: '(")(?:\s*((?:[^,\s\}#/]|/[^/*]).*)$)?'
+        - match: '(")(?:\s*((?:[^,\s\}#/]|/[^/*])+))?'
           captures:
             1: punctuation.definition.string.end.hjson
             2: invalid.illegal.value.hjson
@@ -356,7 +357,7 @@ contexts:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.single.hjson
-        - match: '('')(?:\s*((?:[^,\s\}#/]|/[^/*]).*)$)?'
+        - match: '('')(?:\s*((?:[^,\s\}#/]|/[^/*])+))?'
           captures:
             1: punctuation.definition.string.end.hjson
             2: invalid.illegal.value.hjson
@@ -368,7 +369,7 @@ contexts:
         0: punctuation.definition.string.begin.hjson
       push:
         - meta_scope: string.quoted.multiline.hjson
-        - match: '('''''')(?:\s*((?:[^,\s\}#/]|/[^/*]).*)$)?'
+        - match: '('''''')(?:\s*((?:[^,\s\}#/]|/[^/*])+))?'
           captures:
             1: punctuation.definition.string.end.hjson
             2: invalid.illegal.value.hjson
@@ -384,7 +385,7 @@ contexts:
         0: punctuation.definition.dictionary.begin.hjson
       push:
         - meta_scope: meta.structure.dictionary.hjson
-        - match: '(\}|(?<=\})\}?)(?:\s*([^,\s}].*)$)?'
+        - match: '(\}|(?<=\})\}?)(?:\s*([^,\s}]+))?'
           captures:
             1: punctuation.definition.dictionary.end.hjson
             2: invalid.illegal.value.hjson
